@@ -18,11 +18,20 @@ router.get("/tweets", async (ctx) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    const tweets = await prisma.tweet.findMany();
+    const tweets = await prisma.tweet.findMany({
+      include: {
+        user: true,
+      },
+    });
 
     ctx.body = tweets;
   } catch (error) {
-    ctx.status = 401;
+    if (typeof error === "JsonWebTokenError") {
+      ctx.status = 401;
+      return;
+    }
+
+    ctx.status = 500;
     return;
   }
 });
@@ -131,7 +140,7 @@ router.get("/login", async (ctx) => {
   ctx.status = 404;
 });
 
-router.get("/routeauth", async (ctx) => {
+router.get("/auth", async (ctx) => {
   const [, token] = ctx.request.headers.authorization.split(" ");
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
