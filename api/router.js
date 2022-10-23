@@ -44,6 +44,12 @@ router.post("/tweets", async (ctx) => {
     return;
   }
 
+  if (!ctx.request.body.text || ctx.request.body.text === " ") {
+    ctx.body = { message: "Digite um texto" };
+    ctx.status = 422;
+    return;
+  }
+
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -93,12 +99,12 @@ router.post("/signup", async (ctx) => {
   } catch (err) {
     if (err.meta && !err.meta.target) {
       ctx.status = 422;
-      ctx.body = "E-mail ou nome de usuario já existe.";
+      ctx.body = { message: "E-mail ou nome de usuario já existe." };
       return;
     }
 
     ctx.status = 500;
-    ctx.body = "Internal error.";
+    ctx.body = { message: "Internal error." };
   }
 });
 
@@ -113,11 +119,14 @@ router.get("/login", async (ctx) => {
   });
 
   if (!user) {
+    ctx.body = { message: "E-mail invalido" };
     ctx.status = 404;
     return;
   }
 
   const passwordMatch = bcrypt.compareSync(plainTextpassword, user.password);
+
+  console.log(passwordMatch);
 
   if (passwordMatch) {
     const accessToken = jwt.sign(
@@ -137,6 +146,7 @@ router.get("/login", async (ctx) => {
     });
   }
 
+  ctx.body = { message: "Senha invalida" };
   ctx.status = 404;
 });
 
